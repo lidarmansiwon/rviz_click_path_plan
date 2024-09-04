@@ -7,22 +7,22 @@ from nav_msgs.msg import Path
 from visualization_msgs.msg import Marker, MarkerArray
 import os
 from ament_index_python.packages import get_package_share_directory
+from mk3_msgs.msg import NavigationType
 
-class PointLogger(Node):
+class RecordPathGenerator(Node):
 
     def __init__(self):
-        super().__init__('click_planner')
+        super().__init__('record_path_generator')
         self.get_logger().info('Point Logger Node Started')
 
         # 토픽 구독
-        self.subscription = self.create_subscription(
-            PointStamped,
-            'clicked_point',  # 구독할 토픽 이름
-            self.listener_callback,
+        self.navi_subscription = self.create_subscription(
+            NavigationType,
+            '/navigation',  # 구독할 토픽 이름
+            self.navigation_cbk,
             10
         )
-        self.subscription  # prevent unused variable warning
-
+        self.navigation = None
         # 패키지 소스 디렉토리 경로 설정
         self.package_src_directory = '/home/macroorin3/pass_ws/src/rviz_click_path_plan'
         self.path_folder = os.path.join(self.package_src_directory, 'path')
@@ -48,7 +48,8 @@ class PointLogger(Node):
         self.marker_array = MarkerArray()
 
         self.marker_id = 0
-
+        self.create_timer(1.0, self.process)
+        
     def get_unique_file_path(self):
         base_path = os.path.join(self.path_folder, 'global_path')
         file_path = base_path + '.txt'
@@ -60,18 +61,22 @@ class PointLogger(Node):
 
         return file_path
 
-    def listener_callback(self, msg):
+    def navigation_cbk(self, msg:NavigationType):
         # 메시지에서 좌표 추출
-        x = msg.point.x
-        y = msg.point.y
-        z = msg.point.z
+        self.navigation = msg
+        self.x = self.navigation.x
+        self.y = self.navigation.y
+        self.z = 0.0
 
+    def process(self):
+        if (self.navigation is None):
+            return
         pose = PoseStamped()
         pose.header.frame_id = 'camera_init'
         pose.header.stamp = self.get_clock().now().to_msg()
-        pose.pose.position.x = x
-        pose.pose.position.y = y
-        pose.pose.position.z = z
+        pose.pose.position.x = self.x
+        pose.pose.position.y = -self.y
+        pose.pose.position.z = self.z
 
         # Path에 PoseStamped 객체 추가
         self.path.poses.append(pose)
@@ -81,15 +86,15 @@ class PointLogger(Node):
         self.path_pub.publish(self.path)
 
         # 마커 추가
-        self.add_marker(x, y, z)
+        self.add_marker(self.x, -self.y, self.z)
 
         # MarkerArray 메시지 퍼블리시
         self.marker_pub.publish(self.marker_array)
 
         # 좌표를 파일에 저장
-        self.file.write(f'{x} {-y}\n')    ## Change Axis to NED
+        self.file.write(f'{self.x} {self.y}\n')    ## Change Axis to NED
         self.file.flush()  # 버퍼를 비워 데이터 저장
-        self.get_logger().info(f'Saved: x: {x}, y: {-y}')
+        self.get_logger().info(f'Saved: x: {self.x}, y: {self.y}')
 
     def __del__(self):
         # 파일 닫기
@@ -126,7 +131,7 @@ class PointLogger(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = PointLogger()
+    node = RecordPathGenerator()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

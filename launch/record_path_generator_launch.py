@@ -29,8 +29,8 @@ def generate_launch_description():
     
     path_plan = Node(
         package="rviz_click_path_plan",
-        executable="click_planner",
-        name="click_planner",
+        executable="record_path_generator",
+        name="record_path_generator",
         output="screen",
         emulate_tty=True,
     )

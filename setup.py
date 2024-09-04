@@ -1,4 +1,6 @@
 from setuptools import setup
+import os
+from glob import glob
 
 package_name = 'rviz_click_path_plan'
 
@@ -11,7 +13,8 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/rviz', ['rviz/rcpp.rviz']),
-        ('share/' + package_name + '/launch', ['launch/path_plan_launch.py']),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
+
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -23,6 +26,7 @@ setup(
     entry_points={
         'console_scripts': [
             'click_planner = rviz_click_path_plan.rviz_click_path_planner:main',
+            'record_path_generator = rviz_click_path_plan.record_path_generator:main',
         ],
     },
 )
