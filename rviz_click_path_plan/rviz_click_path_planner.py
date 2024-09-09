@@ -34,7 +34,7 @@ class PointLogger(Node):
         self.file = open(self.file_path, 'a')
 
         # Path 메시지 퍼블리셔 생성
-        self.path_pub = self.create_publisher(Path, 'global_path', 10)
+        self.path_pub = self.create_publisher(Path, '/global_path', 10)
 
         # Path 초기화
         self.path = Path()
