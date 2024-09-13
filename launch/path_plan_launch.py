@@ -40,7 +40,7 @@ def generate_launch_description():
     include_pointcloud_to_grid = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [FindPackageShare('pointcloud_to_grid'), '/launch/pcd_map_generator.launch.py']),
-        launch_arguments={'pcd_file': LaunchConfiguration('pcd_file')}.items(),
+        launch_arguments={'pcd_file': pcd_file}.items(),
     )
 
     rviz_config_file = os.path.join(get_package_share_directory('rviz_click_path_plan'), 'rviz', 'rcpp.rviz')
